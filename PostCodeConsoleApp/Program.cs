@@ -8,6 +8,13 @@ namespace PostCodeConsoleApp
 {
     class Program
     {
+        /// <summary>
+        /// I dont think the regex used covers overseas territories. This is because
+        /// they use a different format some can have 4 letters with only 1 number.
+        /// The regex given eensures a "9AA" ending which doesnt apply to Anguilla.
+        /// Also in some other cases we have 4 characters together. Which will fail too.
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             Console.WriteLine("Loading CSV");
