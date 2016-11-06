@@ -12,23 +12,38 @@ namespace PostCodeConsoleApp
     {
         static void Main(string[] args)
         {
-            var csv = File.ReadAllText("import_data.csv").Split('\n');
-
+            Console.WriteLine("Loading CSV");
+            var csv = File.ReadAllText("import_data.csv").Split('\n')
+                .Select(line => line.Split(','))
+                .Where(line => line != null && line.Length > 1 && !line[0].Contains("row"))
+                .ToDictionary(line => int.Parse(line[0]), line => line[1]);
             var failedCSV = new StringBuilder();
-            foreach(var row in csv)
+            var successCSV = new StringBuilder();
+            var header = string.Format("{0},{1}", "row_id", "postcode");
+            failedCSV.AppendLine(header);
+            successCSV.AppendLine(header);
+
+            var validator = new PostCodeValidator(string.Empty);
+            Console.WriteLine("Sorting CSV by id");
+            var orderedCSV = csv.OrderBy(dict => dict.Key);
+            Console.WriteLine("Verifying PostCodes");
+            foreach (var row in orderedCSV)
             {
-                var splitRow = row.Split(',');
-                if (splitRow != null && splitRow.Length > 1)
+                validator.PostCodeToVerify = row.Value;
+                var postcode = string.Format("{0},{1}", row.Key, row.Value);
+                if (validator.IsValidPostCode())
                 {
-                    var validator = new PostCodeValidator(splitRow[1]);
-                    if (!validator.IsValidPostCode())
-                    {
-                        failedCSV.AppendLine(string.Format("{0},{1}", splitRow[0], splitRow[1]));
-                    }
+                    successCSV.AppendLine(postcode);
+                }
+                else
+                {
+                    failedCSV.AppendLine(postcode);
                 }
             }
-
+            File.WriteAllText("succeeded_validations.csv", successCSV.ToString());
             File.WriteAllText("failed_validation.csv", failedCSV.ToString());
+            Console.WriteLine("Validation Compelted Press a key to exit");
+            Console.Read();
         }
     }
 }
